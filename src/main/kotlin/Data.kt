@@ -1,10 +1,19 @@
-# Mirai-Resend
+//Copyright (C) 2020-2021 Eritque arcus and contributors.
+//
+//This program is free software: you can redistribute it and/or modify
+//it under the terms of the GNU Affero General Public License as
+//published by the Free Software Foundation, either version 3 of the
+//License, or any later version(in your opinion).
+//
+//This program is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//GNU Affero General Public License for more details.
+//
+//You should have received a copy of the GNU Affero General Public License
+//along with this program.  If not, see <http://www.gnu.org/licenses/>.
+package tech.eritquearcus
 
-重发插件, 设置一条重发条件后, 当该条件被触发, 相当于机器人收到另外一条信息
-
-## 配置文件
-
-```kotlin
 data class Config(
     // 好友的重发条件
     val resendsForFriend: ArrayList<ResendCommand>,
@@ -34,28 +43,3 @@ data class Config(
         val miraiCode: Boolean? = null
     )
 }
-```
-
-例子:
-
-```shell
-// 下文 `//` 开头的注释只是解释作用, 实际上的json并不能存在注释
-{
-  "resendsForFriend": [ // 好友重发条件
-    {
-      "target": "a", // 触发字符串
-      "to": "b", // 重发字符串
-      "regex": false,
-      "miraiCode": false
-    }
-  ],
-  "resendsForGroup": [
-    {
-      "target": "a",
-      "to": "b",
-      "regex": false,
-      "miraiCode": false
-    }
-  ]
-}
-```
