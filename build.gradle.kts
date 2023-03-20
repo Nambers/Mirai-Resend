@@ -1,8 +1,8 @@
 plugins {
-    val kotlinVersion = "1.5.30"
+    val kotlinVersion = "1.8.0"
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
-    id("net.mamoe.mirai-console") version "2.9.0-RC"
+    id("net.mamoe.mirai-console") version "2.14.0"
 }
 
 group = "tech.eritquearcus"
@@ -14,6 +14,6 @@ dependencies {
 
 repositories {
     mavenLocal()
-    maven("https://maven.aliyun.com/repository/public")
     mavenCentral()
+    maven("https://maven.aliyun.com/repository/public")
 }
