@@ -9,7 +9,9 @@ group = "tech.eritquearcus"
 version = "1.0"
 
 dependencies {
-    implementation("com.google.code.gson:gson:2.8.9")
+    implementation("com.google.code.gson:gson:2.10.1")
+    testImplementation("net.mamoe:mirai-core-mock:2.14.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
 }
 
 repositories {

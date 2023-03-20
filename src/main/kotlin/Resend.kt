@@ -22,10 +22,7 @@ import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.broadcast
 import net.mamoe.mirai.event.events.FriendMessageEvent
 import net.mamoe.mirai.event.events.GroupMessageEvent
-import net.mamoe.mirai.message.code.MiraiCode
 import net.mamoe.mirai.message.data.MessageChain
-import net.mamoe.mirai.message.data.MessageSource
-import net.mamoe.mirai.message.data.PlainText
 import net.mamoe.mirai.message.data.buildMessageChain
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
@@ -42,28 +39,32 @@ object Resend : KotlinPlugin(
     val fileLock: ReentrantLock = ReentrantLock()
     val gson = Gson()
     val configFile = File(this.configFolder.absolutePath, "config.json")
-    var config = Config(ArrayList(), ArrayList())
-    private fun Config.ResendCommand.equal(msg: MessageChain): Boolean {
-        val text = when {
-            config.miraiCode == true -> msg.contentToString()
-            config.content == true -> msg.serializeToMiraiCode()
-            else -> msg.contentToString()
-        }
-        return when (regex) {
-            true -> Regex(this.target).matches(text)
-            null,
-            false -> text == this.target
-        }
-    }
+    var config = Config(mutableListOf(), mutableListOf())
 
-    private fun MessageChain.buildNewMessage(text: String, miraiCode: Boolean?): MessageChain =
+    private fun MatchResult.buildNewMessage(): MessageChain =
         buildMessageChain {
-            +(if (miraiCode == null || miraiCode == false)
-                PlainText(text)
-            else
-                MiraiCode.deserializeMiraiCode(text))
-            +this@buildNewMessage[MessageSource]!!
+            TODO()
         }
+
+    private fun matchResendConditionOrNull(
+        msg: MessageChain,
+        resends: MutableList<Config.ResendCommand>
+    ): MatchResult? {
+        if (resends.isEmpty() || msg.isEmpty()) return null
+        val index = resends.indices
+        for (i in index) {
+            val matched = if (resends[i].regex == false) {
+                if (resends[i].matchMiraiCode == false) msg.contentToString() == resends[i].target
+                else msg.serializeToMiraiCode() == resends[i].target
+            } else {
+                TODO()
+            }
+            if (matched) {
+                return MatchResult(resends[i])
+            }
+        }
+        return null
+    }
 
     override fun onEnable() {
         logger.info("Resend Plugin loaded")
@@ -77,40 +78,28 @@ object Resend : KotlinPlugin(
         register()
         if (config.blockGroup != true)
             GlobalEventChannel.subscribeAlways<GroupMessageEvent>(priority = if (config.intercept == true) EventPriority.HIGHEST else EventPriority.MONITOR) {
-                if (config.intercept == true) this.intercept()
-                if (config.resendsForGroup.isEmpty()) return@subscribeAlways
-                val index = config.resendsForGroup.indices
-                // 索引循环, 避免循环途中插入导致的问题, 用锁也可以解决但是太重了
-                for (i in index) {
-                    val resend = config.resendsForGroup[i]
-                    if (resend.equal(this.message)) {
-                        GroupMessageEvent(
-                            this.senderName,
-                            this.permission,
-                            this.sender,
-                            this.message.buildNewMessage(resend.to, resend.miraiCode),
-                            this.time
-                        ).broadcast()
-                        if (config.matchOnce == true) return@subscribeAlways
-                    }
+                val r = matchResendConditionOrNull(this.message, config.resendsForGroup)
+                if (r != null) {
+                    if (config.intercept == true) this.intercept()
+                    GroupMessageEvent(
+                        this.senderName,
+                        this.permission,
+                        this.sender,
+                        r.buildNewMessage(),
+                        this.time
+                    ).broadcast()
                 }
             }
         if (config.blockFriend != true)
             GlobalEventChannel.subscribeAlways<FriendMessageEvent>(priority = if (config.intercept == true) EventPriority.HIGHEST else EventPriority.MONITOR) {
-                if (config.intercept == true) this.intercept()
-                if (config.resendsForFriend.isEmpty()) return@subscribeAlways
-                val index = config.resendsForFriend.indices
-                // 索引循环, 避免循环途中插入导致的问题, 用锁也可以解决但是太重了
-                for (i in index) {
-                    val resend = config.resendsForFriend[i]
-                    if (resend.equal(this.message)) {
-                        FriendMessageEvent(
-                            this.sender,
-                            this.message.buildNewMessage(resend.to, resend.miraiCode),
-                            this.time
-                        ).broadcast()
-                        if (config.matchOnce == true) return@subscribeAlways
-                    }
+                val r = matchResendConditionOrNull(this.message, config.resendsForGroup)
+                if (r != null) {
+                    FriendMessageEvent(
+                        this.sender,
+                        r.buildNewMessage(),
+                        this.time
+                    ).broadcast()
+
                 }
             }
     }

@@ -16,30 +16,31 @@ package tech.eritquearcus
 
 data class Config(
     // 好友的重发条件
-    val resendsForFriend: ArrayList<ResendCommand>,
+    val resendsForFriend: MutableList<ResendCommand>,
     // 群聊的重发条件
-    val resendsForGroup: ArrayList<ResendCommand>,
-    // 匹配消息的content(MessageChain.contentToString)
-    val content: Boolean? = null,
-    // 匹配消息的MiraiCode(MessageChain.serializeToMiraiCode)
-    val miraiCode: Boolean? = null,
+    val resendsForGroup: MutableList<ResendCommand>,
     // 阻止其他监听器获取重发前的信息
     val intercept: Boolean? = null,
     // 屏蔽全部好友信息
     val blockFriend: Boolean? = null,
     // 屏蔽全部群聊信息
     val blockGroup: Boolean? = null,
-    // 每条信息只匹配一次
-    val matchOnce: Boolean? = null
 ) {
     data class ResendCommand(
         // 触发字符串, 可为正则表达式
         val target: String,
         // 重发字符串, 可为MiraiCode
         val to: String,
-        // 触发字符串是否是正则表达式
+        // 匹配消息的MiraiCode(MessageChain.serializeToMiraiCode), target 与 miraiCode 相比
+        // 否则匹配 toContentString 的内容
+        val matchMiraiCode: Boolean? = null,
+        // 触发字符串是否是正则表达式, 否则用 target 和消息全字匹配
         val regex: Boolean? = null,
         // 重发字符串是否为MiraiCode
         val miraiCode: Boolean? = null
     )
 }
+
+data class MatchResult(
+    val matchedCommand: Config.ResendCommand
+)
