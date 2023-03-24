@@ -14,6 +14,8 @@
 //along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package tech.eritquearcus
 
+import java.util.regex.Matcher
+
 data class Config(
     // 好友的重发条件
     val resendsForFriend: MutableList<ResendCommand>,
@@ -42,5 +44,6 @@ data class Config(
 }
 
 data class MatchResult(
-    val matchedCommand: Config.ResendCommand
+    val matchedCommand: Config.ResendCommand,
+    var matcher: Matcher? = null,
 )

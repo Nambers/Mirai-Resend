@@ -22,10 +22,12 @@ import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.broadcast
 import net.mamoe.mirai.event.events.FriendMessageEvent
 import net.mamoe.mirai.event.events.GroupMessageEvent
+import net.mamoe.mirai.message.code.MiraiCode
 import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.buildMessageChain
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
+import java.util.regex.Pattern
 
 object Resend : KotlinPlugin(
     JvmPluginDescription(
@@ -43,7 +45,15 @@ object Resend : KotlinPlugin(
 
     private fun MatchResult.buildNewMessage(): MessageChain =
         buildMessageChain {
-            TODO()
+            var toMsg = this@buildNewMessage.matchedCommand.to
+            if (this@buildNewMessage.matcher != null) {
+                toMsg = this@buildNewMessage.matcher!!.replaceAll(toMsg)
+            }
+            if (this@buildNewMessage.matchedCommand.miraiCode == true) {
+                append(MiraiCode.deserializeMiraiCode(toMsg))
+            } else {
+                add(toMsg)
+            }
         }
 
     private fun matchResendConditionOrNull(
@@ -53,14 +63,19 @@ object Resend : KotlinPlugin(
         if (resends.isEmpty() || msg.isEmpty()) return null
         val index = resends.indices
         for (i in index) {
+            val re = MatchResult(resends[i])
             val matched = if (resends[i].regex == false) {
                 if (resends[i].matchMiraiCode == false) msg.contentToString() == resends[i].target
                 else msg.serializeToMiraiCode() == resends[i].target
             } else {
-                TODO()
+                re.matcher = Pattern.compile(resends[i].target).matcher(
+                    if (resends[i].matchMiraiCode == false) msg.contentToString()
+                    else msg.serializeToMiraiCode()
+                )
+                re.matcher!!.matches()
             }
             if (matched) {
-                return MatchResult(resends[i])
+                return re
             }
         }
         return null
@@ -94,12 +109,12 @@ object Resend : KotlinPlugin(
             GlobalEventChannel.subscribeAlways<FriendMessageEvent>(priority = if (config.intercept == true) EventPriority.HIGHEST else EventPriority.MONITOR) {
                 val r = matchResendConditionOrNull(this.message, config.resendsForGroup)
                 if (r != null) {
+                    if (config.intercept == true) this.intercept()
                     FriendMessageEvent(
                         this.sender,
                         r.buildNewMessage(),
                         this.time
                     ).broadcast()
-
                 }
             }
     }
